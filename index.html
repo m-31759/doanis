@@ -15,9 +15,9 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f5f5f3;
+      background: #f4f4f1;
       color: #111;
+      font-family: Arial, Helvetica, sans-serif;
     }
 
     .site {
@@ -29,11 +29,12 @@
 
     header {
       height: 72px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 36px;
       flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 36px;
+      z-index: 10;
     }
 
     .logo {
@@ -54,26 +55,49 @@
       text-decoration: none;
     }
 
-    .gallery {
+    .gallery-wrap {
       position: relative;
       flex: 1;
+      display: flex;
+      align-items: center;
       overflow: hidden;
+    }
+
+    .gallery {
+      width: 100%;
+      overflow: visible;
+      touch-action: pan-y;
+      cursor: grab;
+    }
+
+    .gallery.dragging {
+      cursor: grabbing;
     }
 
     .track {
       display: flex;
-      width: 100%;
-      height: 100%;
+      align-items: center;
+      gap: 28px;
+      will-change: transform;
       transition: transform 0.65s cubic-bezier(.77,0,.18,1);
     }
 
     .slide {
-      min-width: 100%;
-      height: 100%;
+      flex: 0 0 72vw;
+      height: calc(100vh - 150px);
       display: flex;
-      align-items: center;
       justify-content: center;
-      padding: 18px 80px 30px;
+      align-items: center;
+      opacity: 0.42;
+      transform: scale(0.9);
+      transition:
+        transform 0.65s cubic-bezier(.77,0,.18,1),
+        opacity 0.65s ease;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: scale(1);
     }
 
     .slide img {
@@ -83,36 +107,41 @@
       height: auto;
       object-fit: contain;
       display: block;
+      user-select: none;
+      -webkit-user-drag: none;
     }
 
     .arrow {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
+      z-index: 20;
       border: 0;
-      background: transparent;
-      font-size: 38px;
+      background: rgba(244,244,241,0.55);
+      backdrop-filter: blur(4px);
+      width: 46px;
+      height: 64px;
+      font-size: 34px;
       font-weight: 200;
       cursor: pointer;
-      z-index: 10;
-      padding: 20px;
       color: #111;
     }
 
     .prev {
-      left: 10px;
+      left: 12px;
     }
 
     .next {
-      right: 10px;
+      right: 12px;
     }
 
     .counter {
       position: absolute;
       right: 36px;
-      bottom: 20px;
+      bottom: 18px;
       font-size: 12px;
       letter-spacing: 0.12em;
+      z-index: 20;
     }
 
     @media (max-width: 768px) {
@@ -130,18 +159,24 @@
         font-size: 10px;
       }
 
+      .track {
+        gap: 14px;
+      }
+
       .slide {
-        padding: 10px 24px 40px;
+        flex-basis: 82vw;
+        height: calc(100vh - 130px);
       }
 
       .arrow {
+        width: 38px;
+        height: 54px;
         font-size: 28px;
-        padding: 10px;
       }
 
       .counter {
         right: 18px;
-        bottom: 14px;
+        bottom: 12px;
       }
     }
   </style>
@@ -161,20 +196,48 @@
     </nav>
   </header>
 
-  <main class="gallery">
-
-    <div class="track" id="track">
-      <div class="slide"><img src="images/01.jpg" alt=""></div>
-      <div class="slide"><img src="images/02.jpg" alt=""></div>
-      <div class="slide"><img src="images/03.jpg" alt=""></div>
-      <div class="slide"><img src="images/04.jpg" alt=""></div>
-      <div class="slide"><img src="images/05.jpg" alt=""></div>
-      <div class="slide"><img src="images/06.jpg" alt=""></div>
-      <div class="slide"><img src="images/07.jpg" alt=""></div>
-      <div class="slide"><img src="images/08.jpg" alt=""></div>
-    </div>
+  <main class="gallery-wrap">
 
     <button class="arrow prev" id="prev">‹</button>
+
+    <div class="gallery" id="gallery">
+      <div class="track" id="track">
+
+        <div class="slide">
+          <img src="images/01.jpg" alt="">
+        </div>
+
+        <div class="slide">
+          <img src="images/02.jpg" alt="">
+        </div>
+
+        <div class="slide">
+          <img src="images/03.jpg" alt="">
+        </div>
+
+        <div class="slide">
+          <img src="images/04.jpg" alt="">
+        </div>
+
+        <div class="slide">
+          <img src="images/05.jpg" alt="">
+        </div>
+
+        <div class="slide">
+          <img src="images/06.jpg" alt="">
+        </div>
+
+        <div class="slide">
+          <img src="images/07.jpg" alt="">
+        </div>
+
+        <div class="slide">
+          <img src="images/08.jpg" alt="">
+        </div>
+
+      </div>
+    </div>
+
     <button class="arrow next" id="next">›</button>
 
     <div class="counter">
@@ -186,51 +249,119 @@
 </div>
 
 <script>
+  const gallery = document.getElementById('gallery');
   const track = document.getElementById('track');
+  const slides = [...document.querySelectorAll('.slide')];
   const currentDisplay = document.getElementById('current');
-  const slides = document.querySelectorAll('.slide');
 
   let current = 0;
-  let startX = 0;
 
-  function updateGallery() {
-    track.style.transform = `translateX(-${current * 100}%)`;
-    currentDisplay.textContent = String(current + 1).padStart(2, '0');
+  let pointerDown = false;
+  let startX = 0;
+  let currentX = 0;
+
+  function getGap() {
+    const styles = getComputedStyle(track);
+    return parseFloat(styles.gap) || 0;
+  }
+
+  function updateGallery(animate = true) {
+    const slide = slides[current];
+    const slideWidth = slide.getBoundingClientRect().width;
+    const gap = getGap();
+
+    const galleryWidth = gallery.getBoundingClientRect().width;
+
+    const offset =
+      current * (slideWidth + gap)
+      - (galleryWidth - slideWidth) / 2;
+
+    track.style.transition = animate
+      ? 'transform 0.65s cubic-bezier(.77,0,.18,1)'
+      : 'none';
+
+    track.style.transform = `translateX(${-offset}px)`;
+
+    slides.forEach((item, index) => {
+      item.classList.toggle('active', index === current);
+    });
+
+    currentDisplay.textContent =
+      String(current + 1).padStart(2, '0');
   }
 
   function nextSlide() {
-    current = (current + 1) % slides.length;
+    if (current < slides.length - 1) {
+      current++;
+    } else {
+      current = 0;
+    }
+
     updateGallery();
   }
 
   function prevSlide() {
-    current = (current - 1 + slides.length) % slides.length;
+    if (current > 0) {
+      current--;
+    } else {
+      current = slides.length - 1;
+    }
+
     updateGallery();
   }
 
-  document.getElementById('next').addEventListener('click', nextSlide);
-  document.getElementById('prev').addEventListener('click', prevSlide);
+  document.getElementById('next')
+    .addEventListener('click', nextSlide);
+
+  document.getElementById('prev')
+    .addEventListener('click', prevSlide);
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') nextSlide();
     if (e.key === 'ArrowLeft') prevSlide();
   });
 
-  track.addEventListener('touchstart', (e) => {
-    startX = e.touches[0].clientX;
+  gallery.addEventListener('pointerdown', (e) => {
+    pointerDown = true;
+    startX = e.clientX;
+    currentX = e.clientX;
+    gallery.classList.add('dragging');
+    gallery.setPointerCapture(e.pointerId);
   });
 
-  track.addEventListener('touchend', (e) => {
-    const endX = e.changedTouches[0].clientX;
-    const diff = startX - endX;
+  gallery.addEventListener('pointermove', (e) => {
+    if (!pointerDown) return;
+    currentX = e.clientX;
+  });
 
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) {
+  gallery.addEventListener('pointerup', (e) => {
+    if (!pointerDown) return;
+
+    pointerDown = false;
+    gallery.classList.remove('dragging');
+
+    const diff = currentX - startX;
+
+    if (Math.abs(diff) > 60) {
+      if (diff < 0) {
         nextSlide();
       } else {
         prevSlide();
       }
     }
+  });
+
+  gallery.addEventListener('pointercancel', () => {
+    pointerDown = false;
+    gallery.classList.remove('dragging');
+  });
+
+  window.addEventListener('resize', () => {
+    updateGallery(false);
+  });
+
+  window.addEventListener('load', () => {
+    updateGallery(false);
   });
 </script>
 
