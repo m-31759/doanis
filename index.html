@@ -41,6 +41,9 @@
       font-size: 20px;
       font-weight: 600;
       letter-spacing: 0.12em;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
     }
 
     nav {
@@ -79,7 +82,6 @@
       align-items: center;
       gap: 28px;
       will-change: transform;
-      transition: transform 0.65s cubic-bezier(.77,0,.18,1);
     }
 
     .slide {
@@ -90,6 +92,7 @@
       align-items: center;
       opacity: 0.42;
       transform: scale(0.9);
+
       transition:
         transform 0.65s cubic-bezier(.77,0,.18,1),
         opacity 0.65s ease;
@@ -122,7 +125,6 @@
       width: 46px;
       height: 64px;
       font-size: 34px;
-      font-weight: 200;
       cursor: pointer;
       color: #111;
     }
@@ -187,13 +189,16 @@
 <div class="site">
 
   <header>
-    <div class="logo">DOANIS</div>
+
+    <!-- 누르면 메인으로 이동 -->
+    <a class="logo" href="https://doanis.kr/">DOANIS</a>
 
     <nav>
       <a href="#">WORK</a>
       <a href="#">ABOUT</a>
       <a href="https://blog.doanis.kr">BLOG</a>
     </nav>
+
   </header>
 
   <main class="gallery-wrap">
@@ -201,7 +206,13 @@
     <button class="arrow prev" id="prev">‹</button>
 
     <div class="gallery" id="gallery">
+
       <div class="track" id="track">
+
+        <!-- 마지막 사진 복제 -->
+        <div class="slide clone">
+          <img src="images/08.jpg" alt="">
+        </div>
 
         <div class="slide">
           <img src="images/01.jpg" alt="">
@@ -235,7 +246,13 @@
           <img src="images/08.jpg" alt="">
         </div>
 
+        <!-- 첫 사진 복제 -->
+        <div class="slide clone">
+          <img src="images/01.jpg" alt="">
+        </div>
+
       </div>
+
     </div>
 
     <button class="arrow next" id="next">›</button>
@@ -245,7 +262,6 @@
     </div>
 
   </main>
-
 </div>
 
 <script>
@@ -254,58 +270,78 @@
   const slides = [...document.querySelectorAll('.slide')];
   const currentDisplay = document.getElementById('current');
 
-  let current = 0;
+  const realSlideCount = 8;
+
+  // 0은 복제된 08
+  // 1이 실제 01
+  let current = 1;
 
   let pointerDown = false;
   let startX = 0;
   let currentX = 0;
 
-  function getGap() {
-    const styles = getComputedStyle(track);
-    return parseFloat(styles.gap) || 0;
-  }
+  function moveToCurrent(animate = true) {
 
-function updateGallery(animate = true) {
-  const slide = slides[current];
+    const slide = slides[current];
 
-  track.style.transition = animate
-    ? 'transform 0.65s cubic-bezier(.77,0,.18,1)'
-    : 'none';
+    const offset =
+      slide.offsetLeft -
+      (gallery.clientWidth - slide.offsetWidth) / 2;
 
-  // 현재 슬라이드의 실제 레이아웃 위치를 기준으로 중앙 정렬
-  const offset =
-    slide.offsetLeft
-    - (gallery.clientWidth - slide.offsetWidth) / 2;
+    track.style.transition = animate
+      ? 'transform 0.65s cubic-bezier(.77,0,.18,1)'
+      : 'none';
 
-  track.style.transform = `translateX(${-offset}px)`;
+    track.style.transform =
+      `translateX(${-offset}px)`;
 
-  slides.forEach((item, index) => {
-    item.classList.toggle('active', index === current);
-  });
+    slides.forEach((item, index) => {
+      item.classList.toggle('active', index === current);
+    });
 
-  currentDisplay.textContent =
-    String(current + 1).padStart(2, '0');
-}
+    let displayNumber = current;
 
-  function nextSlide() {
-    if (current < slides.length - 1) {
-      current++;
-    } else {
-      current = 0;
+    if (current === 0) {
+      displayNumber = 8;
     }
 
-    updateGallery();
+    if (current === slides.length - 1) {
+      displayNumber = 1;
+    }
+
+    currentDisplay.textContent =
+      String(displayNumber).padStart(2, '0');
+  }
+
+  function nextSlide() {
+    current++;
+    moveToCurrent(true);
   }
 
   function prevSlide() {
-    if (current > 0) {
-      current--;
-    } else {
-      current = slides.length - 1;
+    current--;
+    moveToCurrent(true);
+  }
+
+  /*
+    애니메이션이 끝난 뒤
+    복제 슬라이드에 도착했으면
+    눈에 안 보이게 실제 슬라이드로 순간 이동
+  */
+  track.addEventListener('transitionend', () => {
+
+    // 복제된 01까지 갔을 경우
+    if (current === slides.length - 1) {
+      current = 1;
+      moveToCurrent(false);
     }
 
-    updateGallery();
-  }
+    // 복제된 08까지 갔을 경우
+    if (current === 0) {
+      current = realSlideCount;
+      moveToCurrent(false);
+    }
+  });
 
   document.getElementById('next')
     .addEventListener('click', nextSlide);
@@ -314,37 +350,50 @@ function updateGallery(animate = true) {
     .addEventListener('click', prevSlide);
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight') nextSlide();
-    if (e.key === 'ArrowLeft') prevSlide();
+    if (e.key === 'ArrowRight') {
+      nextSlide();
+    }
+
+    if (e.key === 'ArrowLeft') {
+      prevSlide();
+    }
   });
 
   gallery.addEventListener('pointerdown', (e) => {
     pointerDown = true;
+
     startX = e.clientX;
     currentX = e.clientX;
+
     gallery.classList.add('dragging');
+
     gallery.setPointerCapture(e.pointerId);
   });
 
   gallery.addEventListener('pointermove', (e) => {
     if (!pointerDown) return;
+
     currentX = e.clientX;
   });
 
-  gallery.addEventListener('pointerup', (e) => {
+  gallery.addEventListener('pointerup', () => {
+
     if (!pointerDown) return;
 
     pointerDown = false;
+
     gallery.classList.remove('dragging');
 
     const diff = currentX - startX;
 
     if (Math.abs(diff) > 60) {
+
       if (diff < 0) {
         nextSlide();
       } else {
         prevSlide();
       }
+
     }
   });
 
@@ -354,12 +403,13 @@ function updateGallery(animate = true) {
   });
 
   window.addEventListener('resize', () => {
-    updateGallery(false);
+    moveToCurrent(false);
   });
 
   window.addEventListener('load', () => {
-    updateGallery(false);
+    moveToCurrent(false);
   });
+
 </script>
 
 </body>
