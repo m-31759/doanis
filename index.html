@@ -265,30 +265,27 @@
     return parseFloat(styles.gap) || 0;
   }
 
-  function updateGallery(animate = true) {
-    const slide = slides[current];
-    const slideWidth = slide.getBoundingClientRect().width;
-    const gap = getGap();
+function updateGallery(animate = true) {
+  const slide = slides[current];
 
-    const galleryWidth = gallery.getBoundingClientRect().width;
+  track.style.transition = animate
+    ? 'transform 0.65s cubic-bezier(.77,0,.18,1)'
+    : 'none';
 
-    const offset =
-      current * (slideWidth + gap)
-      - (galleryWidth - slideWidth) / 2;
+  // 현재 슬라이드의 실제 레이아웃 위치를 기준으로 중앙 정렬
+  const offset =
+    slide.offsetLeft
+    - (gallery.clientWidth - slide.offsetWidth) / 2;
 
-    track.style.transition = animate
-      ? 'transform 0.65s cubic-bezier(.77,0,.18,1)'
-      : 'none';
+  track.style.transform = `translateX(${-offset}px)`;
 
-    track.style.transform = `translateX(${-offset}px)`;
+  slides.forEach((item, index) => {
+    item.classList.toggle('active', index === current);
+  });
 
-    slides.forEach((item, index) => {
-      item.classList.toggle('active', index === current);
-    });
-
-    currentDisplay.textContent =
-      String(current + 1).padStart(2, '0');
-  }
+  currentDisplay.textContent =
+    String(current + 1).padStart(2, '0');
+}
 
   function nextSlide() {
     if (current < slides.length - 1) {
