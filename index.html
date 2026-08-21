@@ -71,16 +71,19 @@
     }
 
     nav a,
-    .tools-trigger {
+    .tools-trigger,
+    .about-trigger {
       transition: opacity 0.2s ease;
     }
 
     nav a:hover,
-    .tools-trigger:hover {
+    .tools-trigger:hover,
+    .about-trigger:hover {
       opacity: 0.55;
     }
 
-    .tools-trigger {
+    .tools-trigger,
+    .about-trigger {
       padding: 0;
       border: 0;
       background: transparent;
@@ -179,6 +182,21 @@
       font-size: 12px;
       line-height: 1.6;
       opacity: 0.68;
+    }
+
+    .about-copy {
+      max-width: 620px;
+      font-size: 16px;
+      line-height: 1.9;
+      word-break: keep-all;
+    }
+
+    .about-copy p {
+      margin: 0 0 20px;
+    }
+
+    .about-copy p:last-child {
+      margin-bottom: 0;
     }
 
     .tools-note {
@@ -415,12 +433,26 @@
 
     <nav>
       <a href="#">WORK</a>
-      <a href="#">ABOUT</a>
+      <button class="about-trigger" id="aboutTrigger" type="button" aria-haspopup="dialog" aria-controls="aboutPanel">ABOUT</button>
       <button class="tools-trigger" id="toolsTrigger" type="button" aria-haspopup="dialog" aria-controls="toolsPanel">TOOLS</button>
       <a href="https://blog.doanis.kr">BLOG</a>
     </nav>
 
   </header>
+
+  <section class="tools-panel" id="aboutPanel" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" aria-hidden="true">
+    <div class="tools-panel__inner">
+      <button class="tools-close" id="aboutClose" type="button" aria-label="소개 닫기">×</button>
+      <p class="tools-eyebrow">ABOUT</p>
+      <h1 class="tools-title" id="aboutTitle">DOANIS</h1>
+
+      <div class="about-copy">
+        <p>DOANIS는 일상에서 발견한 생각과 감각을<br>글과 이미지, 소리와 작은 도구로 옮기는 개인 작업실입니다.</p>
+        <p>캘리그라피와 그림, 글과 음악,<br>필요에서 시작한 웹 도구까지.<br>형식을 정해두기보다 마음이 향하는 것을 직접 만들고 기록합니다.</p>
+        <p>이름은 아들 도안(DOAN)과 존재를 뜻하는 IS를 이어 만들었습니다.<br>한 사람의 취향과 시간이 쌓이며 도아니스가 되어가는 공간입니다.</p>
+      </div>
+    </div>
+  </section>
 
   <section class="tools-panel" id="toolsPanel" role="dialog" aria-modal="true" aria-labelledby="toolsTitle" aria-hidden="true">
     <div class="tools-panel__inner">
@@ -942,6 +974,27 @@
   const toolsClose =
     document.getElementById('toolsClose');
 
+  const aboutTrigger =
+    document.getElementById('aboutTrigger');
+
+  const aboutPanel =
+    document.getElementById('aboutPanel');
+
+  const aboutClose =
+    document.getElementById('aboutClose');
+
+  function openAbout() {
+    aboutPanel.classList.add('is-open');
+    aboutPanel.setAttribute('aria-hidden', 'false');
+    aboutClose.focus();
+  }
+
+  function closeAbout() {
+    aboutPanel.classList.remove('is-open');
+    aboutPanel.setAttribute('aria-hidden', 'true');
+    aboutTrigger.focus();
+  }
+
   function openTools() {
     toolsPanel.classList.add('is-open');
     toolsPanel.setAttribute('aria-hidden', 'false');
@@ -954,6 +1007,15 @@
     toolsTrigger.focus();
   }
 
+  aboutTrigger.addEventListener('click', openAbout);
+  aboutClose.addEventListener('click', closeAbout);
+
+  aboutPanel.addEventListener('click', (e) => {
+    if (e.target === aboutPanel) {
+      closeAbout();
+    }
+  });
+
   toolsTrigger.addEventListener('click', openTools);
   toolsClose.addEventListener('click', closeTools);
 
@@ -964,10 +1026,13 @@
   });
 
   document.addEventListener('keydown', (e) => {
-    if (
-      e.key === 'Escape' &&
-      toolsPanel.classList.contains('is-open')
-    ) {
+    if (e.key !== 'Escape') return;
+
+    if (aboutPanel.classList.contains('is-open')) {
+      closeAbout();
+    }
+
+    if (toolsPanel.classList.contains('is-open')) {
       closeTools();
     }
   });
