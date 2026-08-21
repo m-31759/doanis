@@ -67,6 +67,140 @@
       text-decoration: none;
     }
 
+    nav a,
+    .tools-trigger {
+      transition: opacity 0.2s ease;
+    }
+
+    nav a:hover,
+    .tools-trigger:hover {
+      opacity: 0.55;
+    }
+
+    .tools-trigger {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      letter-spacing: inherit;
+      cursor: pointer;
+    }
+
+    .tools-panel {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background: rgba(17, 17, 17, 0.38);
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.28s ease, visibility 0.28s ease;
+    }
+
+    .tools-panel.is-open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .tools-panel__inner {
+      position: relative;
+      width: min(820px, 100%);
+      max-height: calc(100vh - 56px);
+      overflow: auto;
+      padding: 52px;
+      background: #f4f4f1;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.18);
+      transform: translateY(16px);
+      transition: transform 0.35s cubic-bezier(.22,.61,.36,1);
+    }
+
+    .tools-panel.is-open .tools-panel__inner {
+      transform: translateY(0);
+    }
+
+    .tools-eyebrow {
+      margin: 0 0 12px;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+    }
+
+    .tools-title {
+      margin: 0 0 34px;
+      font-size: clamp(28px, 4vw, 52px);
+      font-weight: 500;
+      letter-spacing: -0.04em;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .tool-card {
+      min-height: 210px;
+      padding: 26px;
+      border: 1px solid rgba(17, 17, 17, 0.18);
+      color: inherit;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.22s ease, color 0.22s ease, transform 0.22s ease;
+    }
+
+    .tool-card:hover {
+      background: #111;
+      color: #f4f4f1;
+      transform: translateY(-3px);
+    }
+
+    .tool-card__number {
+      margin-bottom: auto;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+    }
+
+    .tool-card strong {
+      display: block;
+      margin-top: 34px;
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    .tool-card p {
+      margin: 9px 0 0;
+      font-size: 12px;
+      line-height: 1.6;
+      opacity: 0.68;
+    }
+
+    .tools-note {
+      margin: 22px 0 0;
+      font-size: 11px;
+      line-height: 1.6;
+      opacity: 0.58;
+    }
+
+    .tools-close {
+      position: absolute;
+      top: 20px;
+      right: 22px;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font-size: 30px;
+      font-weight: 200;
+      line-height: 1;
+      cursor: pointer;
+    }
+
     /* =========================
        GALLERY
     ========================= */
@@ -218,6 +352,34 @@
         font-size: 10px;
       }
 
+      .tools-panel {
+        align-items: end;
+        padding: 0;
+      }
+
+      .tools-panel__inner {
+        width: 100%;
+        max-height: 88vh;
+        padding: 44px 18px 24px;
+      }
+
+      .tools-title {
+        margin-bottom: 24px;
+      }
+
+      .tools-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tool-card {
+        min-height: 150px;
+        padding: 20px;
+      }
+
+      .tool-card strong {
+        margin-top: 24px;
+      }
+
       .slide {
         width: 76vw;
         height: calc(100vh - 125px);
@@ -251,10 +413,35 @@
     <nav>
       <a href="#">WORK</a>
       <a href="#">ABOUT</a>
+      <button class="tools-trigger" id="toolsTrigger" type="button" aria-haspopup="dialog" aria-controls="toolsPanel">TOOLS</button>
       <a href="https://blog.doanis.kr">BLOG</a>
     </nav>
 
   </header>
+
+  <section class="tools-panel" id="toolsPanel" role="dialog" aria-modal="true" aria-labelledby="toolsTitle" aria-hidden="true">
+    <div class="tools-panel__inner">
+      <button class="tools-close" id="toolsClose" type="button" aria-label="도구 목록 닫기">×</button>
+      <p class="tools-eyebrow">PRIVATE TOOLS</p>
+      <h1 class="tools-title" id="toolsTitle">작은 도구들</h1>
+
+      <div class="tools-grid">
+        <a class="tool-card" href="https://doan-room-planner.m31759.chatgpt.site" target="_blank" rel="noopener noreferrer">
+          <span class="tool-card__number">01 · SPACE</span>
+          <strong>공간 배치 플래너</strong>
+          <p>가구를 드래그해 배치안을 만들고 저장·비교하는 도구</p>
+        </a>
+
+        <a class="tool-card" href="https://my-room-library-2026.m31759.chatgpt.site" target="_blank" rel="noopener noreferrer">
+          <span class="tool-card__number">02 · LIBRARY</span>
+          <strong>책장 한 칸</strong>
+          <p>나만의 책장을 기록하고 들여다보는 작은 공간</p>
+        </a>
+      </div>
+
+      <p class="tools-note">비공개 도구입니다. 접근 권한이 있는 계정에서만 열립니다.</p>
+    </div>
+  </section>
 
 
   <main class="gallery-wrap">
@@ -737,6 +924,50 @@
     'resize',
     updateGallery
   );
+
+
+  /*
+    비공개 도구 패널
+  */
+
+  const toolsTrigger =
+    document.getElementById('toolsTrigger');
+
+  const toolsPanel =
+    document.getElementById('toolsPanel');
+
+  const toolsClose =
+    document.getElementById('toolsClose');
+
+  function openTools() {
+    toolsPanel.classList.add('is-open');
+    toolsPanel.setAttribute('aria-hidden', 'false');
+    toolsClose.focus();
+  }
+
+  function closeTools() {
+    toolsPanel.classList.remove('is-open');
+    toolsPanel.setAttribute('aria-hidden', 'true');
+    toolsTrigger.focus();
+  }
+
+  toolsTrigger.addEventListener('click', openTools);
+  toolsClose.addEventListener('click', closeTools);
+
+  toolsPanel.addEventListener('click', (e) => {
+    if (e.target === toolsPanel) {
+      closeTools();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (
+      e.key === 'Escape' &&
+      toolsPanel.classList.contains('is-open')
+    ) {
+      closeTools();
+    }
+  });
 
 
   /*
