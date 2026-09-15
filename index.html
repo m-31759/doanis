@@ -4,6 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Doanis</title>
+  <!-- Reports are protected by Google account permissions. This public ID only collects events. -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    (function () {
+      let disabled = false;
+      try { disabled = localStorage.getItem('doanis-analytics-opt-out') === '1'; } catch (_) {}
+      window['ga-disable-G-LZW36MQ7WD'] = disabled;
+      if (disabled || !['doanis.kr', 'www.doanis.kr'].includes(location.hostname)) return;
+      gtag('consent', 'default', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+      gtag('js', new Date());
+      gtag('config', 'G-LZW36MQ7WD', {
+        allow_google_signals: false,
+        allow_ad_personalization_signals: false
+      });
+      const tag = document.createElement('script');
+      tag.async = true;
+      tag.src = 'https://www.googletagmanager.com/gtag/js?id=G-LZW36MQ7WD';
+      document.head.appendChild(tag);
+    })();
+  </script>
+
   <link rel="icon" href="/favicon.ico?v=20260821-3" sizes="any">
   <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=20260821-3">
   <link rel="apple-touch-icon" href="/favicon.png?v=20260821-3">
@@ -417,6 +439,13 @@
         bottom: 12px;
       }
     }
+
+
+    .privacy-link { position: fixed; left: 18px; bottom: 12px; z-index: 60; color: #555; font-size: 11px; background: #f4f4f1; padding: 6px; }
+    #privacyDialog { width: min(520px, calc(100% - 32px)); max-height: 80vh; overflow: auto; border: 1px solid #aaa; padding: 28px; color: #111; background: #f4f4f1; line-height: 1.8; }
+    #privacyDialog::backdrop { background: #0006; }
+    #privacyDialog button { padding: 10px 14px; margin: 6px 8px 0 0; cursor: pointer; }
+    #privacyDialog a { color: inherit; }
 
   </style>
 </head>
@@ -1049,6 +1078,39 @@
   );
 
 
+</script>
+
+
+<button type="button" class="privacy-link" id="privacyOpen">개인정보 · 통계 설정</button>
+<dialog id="privacyDialog" aria-labelledby="privacyTitle">
+  <h2 id="privacyTitle">방문 통계 안내</h2>
+  <p>도아니스는 방문자 수와 유입 경로를 파악하기 위해 Google Analytics를 사용합니다. 방문한 페이지, 유입 사이트, 기기·브라우저 정보와 쿠키 식별자가 Google에 전송·처리됩니다. 이름이나 이메일을 통계에 직접 전송하지 않으며, 광고 개인 최적화는 사용하지 않습니다.</p>
+  <p>집계된 보고서는 사이트 운영자의 Google 계정에서 확인하며 홈페이지에 공개하지 않습니다.</p>
+  <p><a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer">Google의 데이터 처리 안내</a></p>
+  <p id="privacyStatus" role="status"></p>
+  <button type="button" id="analyticsToggle"></button>
+  <button type="button" id="privacyClose">닫기</button>
+</dialog>
+<script>
+  (function () {
+    const dialog = document.getElementById('privacyDialog');
+    const toggle = document.getElementById('analyticsToggle');
+    const status = document.getElementById('privacyStatus');
+    function updateStatus() {
+      const disabled = window['ga-disable-G-LZW36MQ7WD'] === true;
+      status.textContent = disabled ? '이 브라우저에서는 방문 통계 수집이 꺼져 있습니다.' : '이 브라우저에서는 방문 통계 수집이 켜져 있습니다.';
+      toggle.textContent = disabled ? '통계 수집 켜기' : '통계 수집 끄기';
+    }
+    document.getElementById('privacyOpen').addEventListener('click', () => { updateStatus(); dialog.showModal(); });
+    document.getElementById('privacyClose').addEventListener('click', () => dialog.close());
+    toggle.addEventListener('click', () => {
+      const disabled = window['ga-disable-G-LZW36MQ7WD'] !== true;
+      try { localStorage.setItem('doanis-analytics-opt-out', disabled ? '1' : '0'); }
+      catch (_) { status.textContent = '브라우저 저장 기능이 차단되어 설정을 저장할 수 없습니다.'; return; }
+      window['ga-disable-G-LZW36MQ7WD'] = disabled;
+      location.reload();
+    });
+  })();
 </script>
 
 </body>
