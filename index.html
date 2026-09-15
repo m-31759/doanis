@@ -293,6 +293,40 @@
       .tool-card strong { margin-top: 24px; }
       .site-footer { padding: 24px 18px 14px; }
     }
+    /* Reserve space for the header, introduction and controls; photos use the remainder. */
+    .site { height: 100vh; height: 100dvh; min-height: 400px; }
+    .work { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .intro { flex-shrink: 0; }
+    .photo-gallery { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .gallery-wrap { flex: 1; min-height: 0; }
+    .gallery { height: 100%; max-height: none; }
+    .slide img { object-fit: contain; }
+    .gallery-footer { flex-shrink: 0; margin-top: 16px; }
+    .site-footer { flex-shrink: 0; padding-top: 8px; padding-bottom: 8px; }
+    @media (max-height: 760px) {
+      header { height: 64px; min-height: 0; }
+      .work { padding-top: 20px; }
+      .intro { margin-bottom: 20px; gap: 16px; }
+      .intro h1 { font-size: 30px; }
+      .intro-eyebrow { margin-bottom: 8px; }
+      .gallery-footer { margin-top: 12px; }
+    }
+    @media (max-width: 768px) {
+      .intro { gap: 12px; margin-bottom: 20px; }
+      .gallery-footer { flex-wrap: nowrap; gap: 8px; width: 100%; }
+      .gallery-caption { font-size: 11px; }
+      .gallery-caption span { font-size: 8px; }
+      .gallery-controls { gap: 10px; }
+    }
+    @media (max-height: 560px) {
+      header { height: auto; padding-block: 10px; }
+      .work { padding-top: 12px; }
+      .intro { flex-direction: row; align-items: flex-end; margin-bottom: 12px; }
+      .intro h1 { font-size: 24px; }
+      .intro-copy { font-size: 11px; }
+      .intro-eyebrow { font-size: 8px; }
+      .gallery-footer { margin-top: 8px; }
+    }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }
 
     .privacy-link { border: 0; color: #74786d; font-size: 10px; background: transparent; padding: 6px 0; cursor: pointer; }
@@ -371,7 +405,7 @@
       </div>
       <p class="intro-copy">글과 이미지, 소리와 작은 도구.<br>마음이 향하는 것을 만들고 기록하는 개인 작업실.</p>
     </section>
-    <section aria-label="일상에서 발견한 장면" aria-roledescription="캐러셀">
+    <section class="photo-gallery" aria-label="일상에서 발견한 장면" aria-roledescription="캐러셀">
       <div class="gallery-wrap">
         <div class="gallery" id="gallery">
           <div class="slide" role="group" aria-roledescription="슬라이드" aria-label="1 / 8"><img src="images/01.jpg" alt="일상에서 발견한 장면 1" draggable="false"></div>
@@ -632,7 +666,8 @@
     'wheel',
     (e) => {
 
-      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+      if (e.ctrlKey) return; // Preserve browser pinch-to-zoom.
+      if (document.querySelector('.tools-panel.is-open, dialog[open]')) return;
       e.preventDefault();
 
 
