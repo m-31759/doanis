@@ -258,6 +258,9 @@
     .intro-copy { margin: 0 0 1px; color: #808475; font-size: 13px; line-height: 1.9; word-break: keep-all; }
     .gallery-wrap { width: 86.5%; margin: 0 auto; overflow: hidden; }
     .gallery { position: relative; width: 100%; height: min(46vw, 620px); cursor: grab; touch-action: pan-y; user-select: none; }
+    .gallery { isolation: isolate; }
+    .slide { will-change: transform, opacity; backface-visibility: hidden; }
+    .slide img { backface-visibility: hidden; }
     .gallery.dragging { cursor: grabbing; }
     .slide { position: absolute; left: 50%; top: 50%; width: 79.2%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: transform .62s cubic-bezier(.22,.61,.36,1), opacity .45s ease; }
     .slide img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; -webkit-user-drag: none; }
@@ -492,7 +495,7 @@
     // Use layout width; transforms must not affect spacing on repeated navigation.
     const width = slides[0].offsetWidth;
     const gap = window.innerWidth <= 768 ? 16 : 28;
-    const step = width * .97 + gap;
+    const step = width + gap;
     slides.forEach((slide, index) => {
       const distance = circularDistance(index);
       const active = distance === 0;
@@ -500,7 +503,9 @@
       slide.style.zIndex = active ? '10' : '5';
       slide.style.pointerEvents = Math.abs(distance) <= 1 ? 'auto' : 'none';
       slide.setAttribute('aria-hidden', String(!active));
-      slide.style.transform = `translate3d(calc(-50% + ${distance * step}px), -50%, 0) scale(${active ? 1 : .94})`;
+      // Keep the decoded image at a constant scale throughout the transition.
+      // Only translate it, avoiding transient resampling seams in Chrome.
+      slide.style.transform = `translate3d(calc(-50% + ${distance * step}px), -50%, 0)`;
     });
     currentDisplay.textContent = String(current + 1).padStart(2, '0');
   }
