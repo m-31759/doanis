@@ -493,6 +493,20 @@
   let galleryFrame = 0;
   const galleryMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
+  function galleryEase(progress) {
+    if (progress <= 0 || progress >= 1) return progress;
+    // Match the original cubic-bezier(.22, .61, .36, 1) timing.
+    const cubic = (t, a, b) => 3 * (1 - t) * (1 - t) * t * a + 3 * (1 - t) * t * t * b + t * t * t;
+    let low = 0;
+    let high = 1;
+    for (let i = 0; i < 20; i++) {
+      const t = (low + high) / 2;
+      if (cubic(t, .22, .36) < progress) low = t;
+      else high = t;
+    }
+    return cubic((low + high) / 2, .61, 1);
+  }
+
   function updateGallery(animate = false) {
     cancelAnimationFrame(galleryFrame);
     galleryFrame = 0;
@@ -522,8 +536,7 @@
     });
 
     function paint(progress) {
-      // Settle promptly with continuous deceleration, without a mid-move speed surge.
-      const eased = Math.sin(progress * Math.PI / 2);
+      const eased = galleryEase(progress);
       slides.forEach((slide, index) => {
         const { start, end } = positions[index];
         const x = start + (end - start) * eased;
@@ -537,7 +550,7 @@
     if (moving) {
       const began = performance.now();
       function frame(now) {
-        const progress = Math.min((now - began) / 650, 1);
+        const progress = Math.min((now - began) / 620, 1);
         paint(progress);
         galleryFrame = progress < 1 ? requestAnimationFrame(frame) : 0;
       }
