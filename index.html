@@ -259,8 +259,8 @@
     .gallery-wrap { width: 86.5%; margin: 0 auto; overflow: hidden; }
     .gallery { position: relative; width: 100%; height: min(46vw, 620px); cursor: grab; touch-action: pan-y; user-select: none; }
     .gallery.dragging { cursor: grabbing; }
-    /* Animate position only; keep photos opaque and avoid forced GPU transforms. */
-    .slide { position: absolute; left: 0; top: 0; width: 79.2%; height: 100%; display: flex; align-items: center; justify-content: center; visibility: hidden; transition: left .62s cubic-bezier(.22,.61,.36,1); }
+    /* JavaScript moves opaque photos on device pixels, without CSS compositing. */
+    .slide { position: absolute; left: 0; top: 0; width: 79.2%; height: 100%; display: flex; align-items: center; justify-content: center; visibility: hidden; }
     .slide img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; -webkit-user-drag: none; }
     .gallery-footer { width: 68.5%; margin: 21px auto 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
     .gallery-caption { margin: 0; font-size: 13px; line-height: 1.5; }
@@ -490,29 +490,70 @@
 
 
 
-  function updateGallery() {
-    // Position in layout pixels without permanently promoting photos to GPU layers.
+  let galleryFrame = 0;
+  const galleryMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+  function updateGallery(animate = false) {
+    cancelAnimationFrame(galleryFrame);
+    galleryFrame = 0;
     const width = slides[0].getBoundingClientRect().width;
     const gap = window.innerWidth <= 768 ? 16 : 28;
     const step = width + gap;
+    const origin = gallery.getBoundingClientRect().left;
+    const ratio = window.devicePixelRatio || 1;
+    const galleryWidth = gallery.clientWidth;
+    const center = (galleryWidth - width) / 2;
+    const moving = animate === true && !galleryMotion.matches;
+    const positions = slides.map((slide, index) => {
+      const end = center + circularDistance(index) * step;
+      let start = parseFloat(slide.style.left);
+      if (!Number.isFinite(start) || !moving) start = end;
+      // Recycle only offscreen photos across the circular boundary.
+      start += Math.round((end - start) / (total * step)) * total * step;
+      return { start, end };
+    });
+
     slides.forEach((slide, index) => {
       const distance = circularDistance(index);
       const active = distance === 0;
-      slide.style.visibility = Math.abs(distance) <= 1 ? 'visible' : 'hidden';
       slide.style.zIndex = active ? '10' : '5';
       slide.style.pointerEvents = Math.abs(distance) <= 1 ? 'auto' : 'none';
       slide.setAttribute('aria-hidden', String(!active));
-      slide.style.left = `${Math.round((gallery.clientWidth - width) / 2 + distance * step)}px`;
     });
+
+    function paint(progress) {
+      // Gentle acceleration and deceleration over 900 ms.
+      const eased = progress * progress * (3 - 2 * progress);
+      slides.forEach((slide, index) => {
+        const { start, end } = positions[index];
+        const x = start + (end - start) * eased;
+        const left = Math.round((origin + x) * ratio) / ratio - origin;
+        slide.style.left = `${left}px`;
+        slide.style.visibility = left + width > 0 && left < galleryWidth ? 'visible' : 'hidden';
+      });
+    }
+
+    paint(moving ? 0 : 1);
+    if (moving) {
+      const began = performance.now();
+      function frame(now) {
+        const progress = Math.min((now - began) / 900, 1);
+        paint(progress);
+        galleryFrame = progress < 1 ? requestAnimationFrame(frame) : 0;
+      }
+      galleryFrame = requestAnimationFrame(frame);
+    }
     currentDisplay.textContent = String(current + 1).padStart(2, '0');
   }
+
+  galleryMotion.addEventListener('change', () => updateGallery());
 
   function nextSlide() {
 
     current =
       (current + 1) % total;
 
-    updateGallery();
+    updateGallery(true);
 
   }
 
@@ -527,7 +568,7 @@
     current =
       (current - 1 + total) % total;
 
-    updateGallery();
+    updateGallery(true);
 
   }
 
